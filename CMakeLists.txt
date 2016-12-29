@@ -534,13 +534,11 @@ IF(NOT WIN32)
 	IF(DEBUG)
 		add_definitions( -DDEBUG )
 		# stricter: no optimizations and inlining, comment out if needed...
-		add_definitions( -O0 -fno-inline -Wall )
+		add_definitions( -O0 -fno-inline -Wall -std=c++11 )
 	ELSE()
 		# non-debug, optimized version
-		add_definitions( -O3 -Wall )
+		add_definitions( -O3 -Wall -std=c++11 )
 	ENDIF()
-	# c++11 required for all c++ sources
-	set_source_files_properties(${PP_SOURCES} PROPERTIES COMPILE_FLAGS "  -std=c++11  " )
 ELSE()
 	# get rid of some MSVC warnings
 	add_definitions( /wd4018 /wd4146 /wd4800 )
