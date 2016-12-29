@@ -126,7 +126,6 @@ SET(F_LIBS "" )
 SET(F_LIB_PATHS)
 SET(F_LINKADD "") # additional linker flags, not a list
 set(PP_PATH "pp")
-SET(SILENT_SOURCES)
 
 # need pre-processing
 SET(PP_SOURCES
@@ -359,18 +358,21 @@ list(APPEND F_LIBS ${PYTHON_LIBRARIES})
 # Z compression
 if (1)
 	# default: build from own sources
-	set(ZLIB_SRC adler32.c compress.c crc32.c deflate.c gzclose.c gzlib.c gzread.c gzwrite.c
+	set(ZLIB_FILES adler32.c compress.c crc32.c deflate.c gzclose.c gzlib.c gzread.c gzwrite.c
 				 inflate.c infback.c inftrees.c inffast.c trees.c uncompr.c zutil.c)
-	foreach(it ${ZLIB_SRC})
-		list(APPEND SILENT_SOURCES dependencies/zlib-1.2.8/${it}) 
+	set(ZLIB_SRC)
+	foreach(it ${ZLIB_FILES})
+		list(APPEND ZLIB_SRC dependencies/zlib-1.2.8/${it}) 
 	endforeach(it)
 
-	set(ZLIB_ADDFLAGS "-Dverbose=-1")
-	if(NOT WIN32)
-		set(ZLIB_ADDFLAGS "-Wno-implicit-function-declaration -Dverbose=-1")
+	add_library(dep_zlib OBJECT ${ZLIB_SRC})
+	if (WIN32)
+		set_target_properties(dep_zlib PROPERTIES COMPILE_FLAGS "/Dverbose=-1 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE ")
+	else()
+		set_target_properties(dep_zlib PROPERTIES COMPILE_FLAGS "-Dverbose=-1 -O3 -Wimplicit-function-declaration ")	
 	endif()
-	set_source_files_properties(${SILENT_SOURCES} PROPERTIES COMPILE_FLAGS "${ZLIB_ADDFLAGS}")
 
+	target_include_directories(dep_zlib PUBLIC dependencies/zlib-1.2.8)
 	list(APPEND INCLUDE_PATHS dependencies/zlib-1.2.8)
 endif()
 if (0)
@@ -428,7 +430,7 @@ ENDIF()
 #******************************************************************************
 # apply preprocessor
 
-set(SOURCES ${NOPP_SOURCES} ${SILENT_SOURCES})
+set(SOURCES ${NOPP_SOURCES} $<TARGET_OBJECTS:dep_zlib>)
 set(HEADERS ${NOPP_HEADERS})
 set(PP_REGCPP)
 set(PP_REGS)
@@ -542,10 +544,6 @@ IF(NOT WIN32)
 ELSE()
 	# get rid of some MSVC warnings
 	add_definitions( /wd4018 /wd4146 /wd4800 )
-
-	# for zlib
-	add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
-	add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
 
 	# unsigned to signed conversions
 	add_definitions( /wd4267 )
