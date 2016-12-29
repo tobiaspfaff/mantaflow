@@ -655,8 +655,11 @@ void writeGridVol<Real>(const string& name, Grid<Real>* grid) {
 	header.dimY = grid->getSizeY();
 	header.dimZ = grid->getSizeZ();
 	header.channels = 1; // only 1 channel
-	header.bboxMin = Vec3(-0.5);
-	header.bboxMax = Vec3( 0.5);
+
+	Vec3 bbBox = toVec3(grid->getSize());
+	bbBox /= bbBox.max();
+	header.bboxMin = -0.5*bbBox;
+	header.bboxMax = 0.5*bbBox;
 
 	FILE* fp = fopen( name.c_str(), "wb" );
 	if (fp == NULL) {
